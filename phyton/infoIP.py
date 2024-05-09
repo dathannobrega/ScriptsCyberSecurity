@@ -30,14 +30,21 @@ def consultar_ip_virustotal(ip, api_key):
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
 
-def consultar_abuseipdb(ip):
+def consultar_abuseipdb(ip, api_key):
+    url = "https://api.abuseipdb.com/api/v2/check"
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+        "Key": api_key,
+        "Accept": "application/json"
+    }
+    params = {
+        "ipAddress": ip,
+        "maxAgeInDays": "90",
+        "verbose": ""
     }
     try:
-        response = requests.get(f'https://www.abuseipdb.com/check/{ip}', headers=headers)
+        response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()  # Isso assegura que erros HTTP lançam exceções
-        return response.text  # Retorna o HTML da página
+        return response.json()  # Retorna o JSON da resposta
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
 
@@ -85,7 +92,8 @@ def gerar_relatorio(ip, virus_total_result, abuseipdb_result, ibm_xforce_result,
 def main():
     config = configparser.ConfigParser()
     config.read('config.ini')
-    api_key = config['API_KEYS']['VIRUSTOTAL_API_KEY']
+    api_key_VT = config['API_KEYS']['VIRUSTOTAL_API_KEY']
+    api_key_AIPDB = config['API_KEYS']['ABUSEIPDB_API_KEY']
 
     if len(sys.argv) < 2:
         print("Usage: python infoIP.py <ip>")
@@ -93,8 +101,8 @@ def main():
 
     ip = sys.argv[1]
 
-    #virus_total_result = consultar_ip_virustotal(ip, api_key)
-    abuseipdb_result = consultar_abuseipdb(ip)
+    #virus_total_result = consultar_ip_virustotal(ip, api_key_VT)
+    abuseipdb_result = consultar_abuseipdb(ip, api_key_AIPDB)
     print(abuseipdb_result)
     #ibm_xforce_result = consultar_ibm_xforce(ip)
     #whois_result = consultar_whois(ip)
