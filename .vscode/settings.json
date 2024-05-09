@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "stdio.h": "c",
-        "socket.h": "c",
-        "in.h": "c"
-    },
-    "python.formatting.provider": "black"
-}

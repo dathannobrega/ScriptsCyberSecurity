@@ -1,0 +1,4 @@
+requests
+fpdf
+whois
+bs4
