@@ -1,0 +1,50 @@
+import socket
+import struct
+import time
+
+def send_ntp_request(ntp_server):
+    # NTP packet format: https://tools.ietf.org/html/rfc5905
+    # The first byte (LI, VN, Mode) should be 0x1b to make a client request
+    ntp_data = b'\x1b' + 47 * b'\0'
+
+    # Create a UDP socket
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client.settimeout(1)  # Set a timeout of 1 second
+
+    # Send the NTP request packet to the server
+    client.sendto(ntp_data, (ntp_server, 123))
+
+    try:
+        # Receive the response from the NTP server
+        data, address = client.recvfrom(1024)
+    except socket.timeout:
+        print("Request timed out")
+        return None
+
+    # Close the socket
+    client.close()
+
+    if data:
+        return data
+    else:
+        print("No response received")
+        return None
+
+def parse_ntp_response(data):
+    # Unpack the response packet according to the NTP packet format
+    unpacked = struct.unpack('!12I', data[0:48])
+    transmit_timestamp = unpacked[10] + float(unpacked[11]) / 2**32
+    return transmit_timestamp
+
+def print_ntp_time(ntp_server):
+    response = send_ntp_request(ntp_server)
+    if response:
+        ntp_time = parse_ntp_response(response)
+        # Convert NTP time to Unix epoch time (subtract 2208988800 seconds)
+        unix_time = ntp_time - 2208988800
+        # Print the time in a human-readable format
+        print("Time from NTP server:", time.ctime(unix_time))
+
+if __name__ == "__main__":
+    ntp_server = "pool.ntp.org"  # You can use any NTP server
+    print_ntp_time(ntp_server)
